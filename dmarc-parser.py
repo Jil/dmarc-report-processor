@@ -19,6 +19,7 @@ import sys
 import xml.etree.cElementTree as etree
 import argparse
 import socket
+import json
 
 # returns meta fields
 def get_meta(context):
@@ -73,36 +74,41 @@ def print_record(context, meta, args):
   for event, elem in context:
     if event == "end" and elem.tag == "record":
 
+      elements = dict(meta=meta)
+
       # process record elements
       # NOTE: This may require additional input validation
-      source_ip = (elem.findtext("row/source_ip", 'NULL')).translate(None, ',')
-      count = (elem.findtext("row/count", 'NULL')).translate(None, ',')
-      disposition = (elem.findtext("row/policy_evaluated/disposition", 'NULL')).translate(None, ',')
-      dkim = (elem.findtext("row/policy_evaluated/dkim", 'NULL')).translate(None, ',')
-      spf = (elem.findtext("row/policy_evaluated/spf", 'NULL')).translate(None, ',')
-      reason_type = (elem.findtext("row/policy_evaluated/reason/type", 'NULL')).translate(None, ',')
-      comment = (elem.findtext("row/policy_evaluated/reason/comment", 'NULL')).translate(None, ',')
-      envelope_to = (elem.findtext("identifiers/envelope_to", 'NULL')).translate(None, ',')
-      header_from = (elem.findtext("identifiers/header_from", 'NULL')).translate(None, ',')
-      dkim_domain = (elem.findtext("auth_results/dkim/domain", 'NULL')).translate(None, ',')
-      dkim_result = (elem.findtext("auth_results/dkim/result", 'NULL')).translate(None, ',')
-      dkim_hresult = (elem.findtext("auth_results/dkim/human_result", 'NULL')).translate(None, ',')
-      spf_domain = (elem.findtext("auth_results/spf/domain", 'NULL')).translate(None, ',')
-      spf_result = (elem.findtext("auth_results/spf/result", 'NULL')).translate(None, ',')
+      elements['source_ip'] = (elem.findtext("row/source_ip", 'NULL')).translate(None, ',')
+      elements['count'] = (elem.findtext("row/count", 'NULL')).translate(None, ',')
+      elements['disposition'] = (elem.findtext("row/policy_evaluated/disposition", 'NULL')).translate(None, ',')
+      elements['dkim'] = (elem.findtext("row/policy_evaluated/dkim", 'NULL')).translate(None, ',')
+      elements['spf'] = (elem.findtext("row/policy_evaluated/spf", 'NULL')).translate(None, ',')
+      elements['reason_type'] = (elem.findtext("row/policy_evaluated/reason/type", 'NULL')).translate(None, ',')
+      elements['comment'] = (elem.findtext("row/policy_evaluated/reason/comment", 'NULL')).translate(None, ',')
+      elements['envelope_to'] = (elem.findtext("identifiers/envelope_to", 'NULL')).translate(None, ',')
+      elements['header_from'] = (elem.findtext("identifiers/header_from", 'NULL')).translate(None, ',')
+      elements['dkim_domain'] = (elem.findtext("auth_results/dkim/domain", 'NULL')).translate(None, ',')
+      elements['dkim_result'] = (elem.findtext("auth_results/dkim/result", 'NULL')).translate(None, ',')
+      elements['dkim_hresult'] = (elem.findtext("auth_results/dkim/human_result", 'NULL')).translate(None, ',')
+      elements['spf_domain'] = (elem.findtext("auth_results/spf/domain", 'NULL')).translate(None, ',')
+      elements['spf_result'] = (elem.findtext("auth_results/spf/result", 'NULL')).translate(None, ',')
 
       # If you can identify internal IP
-      x_host_name = "NULL"
+      elements['x_host_name'] = "NULL"
       #try:
       #  if IS_INTERNAL_IP(source_ip):
       #    x_host_name = socket.getfqdn(source_ip)
       #except: 
       #  x_host_name = "NULL"
-			
-      print meta + ", source_ip=" + source_ip + ", count=" + count + ", disposition=" + disposition + ", dkim=" + dkim \
-            + ", spf=" + spf + ", reason_type=" + reason_type + ", comment=" + comment + ", envelope_to=" + envelope_to \
-            + ", header_from=" + header_from + ", dkim_domain=" + dkim_domain + ", dkim_result=" + dkim_result \
-            + ", dkim_hresult=" + dkim_hresult + ", spf_domain=" + spf_domain + ", spf_result=" + spf_result  \
-            + ", x-host_name=" + x_host_name
+		
+      if args.format == 'CSV':
+	print "{meta}, source_ip={source_ip}, count={count}, disposition={disposition}, dkim={dkim}, " \
+	    "spf={spf}, reason_type={reason_type}, comment={comment}, envelope_to={envelope_to}, "\
+	    "header_from={header_from}, dkim_domain={dkim_domain}, dkim_result={dkim_result}, "\
+	    "dkim_hresult={dkim_hresult}, spf_domain={spf_domain}, spf_result={spf_result}, "\
+	    "x-host_name={x_host_name}".format(**elements)
+      elif args.format == 'json':
+	print json.dumps(elements)
 
       root.clear();
       continue
@@ -115,6 +121,10 @@ def main():
   options = argparse.ArgumentParser(epilog="Example: \
 %(prog)s dmarc-xml-file 1> outfile.log")
   options.add_argument("dmarcfile", help="dmarc file in XML format")
+  options.add_argument('--format', '-f',
+    help="Output format, either 'CSV' or 'json'",
+    default='CSV')
+
   args = options.parse_args()
 
   # get an iterable and turn it into an iterator
