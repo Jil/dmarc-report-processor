@@ -107,6 +107,8 @@ def print_record(context, meta, args):
 	    "header_from={header_from}, dkim_domain={dkim_domain}, dkim_result={dkim_result}, "\
 	    "dkim_hresult={dkim_hresult}, spf_domain={spf_domain}, spf_result={spf_result}, "\
 	    "x-host_name={x_host_name}".format(**elements)
+      elif args.format == 'json':
+	print json.dumps(elements)
 
       root.clear();
       continue
