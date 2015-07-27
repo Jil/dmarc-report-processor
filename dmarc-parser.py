@@ -16,6 +16,7 @@
 # Error messages are directed to stderr
 #
 import sys
+import os
 import xml.etree.cElementTree as etree
 import argparse
 import socket
@@ -125,6 +126,7 @@ def main():
 
   print "orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName"
   print_record(iter(etree.iterparse(args.dmarcfile, events=("start", "end"))), meta_fields, args)
+  os.remove(args.dmarcfile)
 
 if __name__ == "__main__":
   main()
