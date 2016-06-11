@@ -1,4 +1,4 @@
-Script to pull DMARC records, process and pass it to splunk.
+Script to pull DMARC records, process and pass it to splunk !!!
  
 **imap-client.py** - Pull attachments from mail imap server and store
 it in the given directory. This is a generic program that can be used to
