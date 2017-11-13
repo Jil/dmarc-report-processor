@@ -52,8 +52,7 @@ def get_meta(context):
             feedback_pub = (domain, adkim, aspf, p, pct)
 
         if feedback_pub and report_meta:
-            meta = report_meta + feedback_pub
-            return ';'.join(meta)
+            return report_meta + feedback_pub
 
         root.clear()
 
@@ -66,7 +65,7 @@ def print_record(context, meta, args):
     for event, elem in context:
         if event == "end" and elem.tag == "record":
 
-            elements = dict(meta=meta)
+            elements = dict(meta=';'.join(meta))
 
             # process record elements
             # NOTE: This may require additional input validation
@@ -96,8 +95,8 @@ def print_record(context, meta, args):
             elif args.format == 'json':
                 print(json.dumps(elements))
             else:
-                print(';'.join((
-                    meta, source_ip, count, disposition, dkim, spf,
+                print(';'.join(meta + (
+                    source_ip, count, disposition, dkim, spf,
                     reason_type, comment, envelope_to, header_from,
                     dkim_domain, dkim_result, dkim_hresult, spf_domain,
                     spf_result, x_host_name)))
@@ -139,14 +138,20 @@ def main():
     with extract_file(args.dmarcfile) as filename:
         cleanup_input(filename)
 
-        meta_fields = get_meta(etree.iterparse(filename, events=("start", "end"), recover=True))
-        if not meta_fields:
+        meta = get_meta(etree.iterparse(filename, events=("start", "end"), recover=True))
+        if not meta:
             print("Error: No valid 'policy_published' and 'report_metadata' " +
                   "xml tags found; File: " + args.dmarcfile, file=sys.stderr)
             sys.exit(1)
 
-        print("orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName")
-        print_record(etree.iterparse(filename, events=("start", "end"), recover=True), meta_fields, args)
+        print(';'.join((
+            "orgName", "email", "extraContactInfo:dateRangeBegin",
+            "dateRangeEnd", "domain", "adkim", "aspf", "policy", "percentage",
+            "sourceIP", "messageCount", "disposition", "dkim", "spf",
+            "reasonType", "comment", "envelopeTo", "headerFrom", "dkimDomain",
+            "dkimResult", "dkimHresult", "spfDomain", "spfResult", "xHostName",
+        )))
+        print_record(etree.iterparse(filename, events=("start", "end"), recover=True), meta, args)
 
 
 if __name__ == "__main__":
