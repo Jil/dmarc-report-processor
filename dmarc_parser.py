@@ -7,20 +7,18 @@
 # Author Binu P. Ramakrishnan
 # Created 09/12/2014
 #
-# Program that accepts a (LARGE) xml file and convert it to 
-# easy-to-process comma separated key=value pair format 
+# Program that accepts a (LARGE) xml file and convert it to
+# easy-to-process comma separated key=value pair format
 # (line oriented splunk friendly record format)
 #
 # Usage: dmarc-parser.py <input xml file> 1> outfile
-# Returns 0 for success and 1 for errors. 
+# Returns 0 for success and 1 for errors.
 # Error messages are directed to stderr
 #
 import sys
 import os
 from lxml import etree
 import argparse
-import socket
-import tempfile
 import json
 
 # returns meta fields
@@ -97,11 +95,6 @@ def print_record(context, meta, args):
 
             # If you can identify internal IP
             elements['x_host_name'] = "NULL"
-            #try:
-            #    if IS_INTERNAL_IP(source_ip):
-            #        x_host_name = socket.getfqdn(source_ip)
-            #except: 
-            #    x_host_name = "NULL"
             if args.format == 'CSV':
                 print("{meta}, source_ip={source_ip}, count={count}, disposition={disposition}, dkim={dkim}, "
                       "spf={spf}, reason_type={reason_type}, comment={comment}, envelope_to={envelope_to}, "
