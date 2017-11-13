@@ -20,6 +20,9 @@ import os
 from lxml import etree
 import argparse
 import json
+import zipfile
+import tempfile
+import contextlib
 
 
 # returns meta fields
@@ -112,6 +115,17 @@ def cleanup_input(inputfile):
     os.rename(inputfile + '.tmp', inputfile)
 
 
+@contextlib.contextmanager
+def extract_file(filename):
+    if filename.endswith('.zip'):
+        with zipfile.ZipFile(filename) as zf:
+            zi, = zf.infolist()
+            with tempfile.TemporaryDirectory() as tmpdir:
+                yield zf.extract(zi, tmpdir)
+    else:
+        yield filename
+
+
 def main():
     options = argparse.ArgumentParser(epilog="Example: \
 %(prog)s dmarc-xml-file 1> outfile.log")
@@ -122,16 +136,17 @@ def main():
 
     args = options.parse_args()
 
-    cleanup_input(args.dmarcfile)
+    with extract_file(args.dmarcfile) as filename:
+        cleanup_input(filename)
 
-    # get an iterable and turn it into an iterator
-    meta_fields = get_meta(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)))
-    if not meta_fields:
-        print("Error: No valid 'policy_published' and 'report_metadata' xml tags found; File: " + args.dmarcfile, file=sys.stderr) 
-        sys.exit(1)
+        # get an iterable and turn it into an iterator
+        meta_fields = get_meta(iter(etree.iterparse(filename, events=("start", "end"), recover=True)))
+        if not meta_fields:
+            print("Error: No valid 'policy_published' and 'report_metadata' xml tags found; File: " + args.dmarcfile, file=sys.stderr)
+            sys.exit(1)
 
-    print("orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName")
-    print_record(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)), meta_fields, args)
+        print("orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName")
+        print_record(iter(etree.iterparse(filename, events=("start", "end"), recover=True)), meta_fields, args)
 
 
 if __name__ == "__main__":
