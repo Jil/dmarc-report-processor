@@ -25,6 +25,15 @@ import tempfile
 import contextlib
 
 
+header = (
+    "orgName", "email", "extraContactInfo", "dateRangeBegin",
+    "dateRangeEnd", "domain", "adkim", "aspf", "policy", "percentage",
+    "sourceIP", "messageCount", "disposition", "dkim", "spf",
+    "reasonType", "comment", "envelopeTo", "headerFrom", "dkimDomain",
+    "dkimResult", "dkimHresult", "spfDomain", "spfResult", "xHostName",
+)
+
+
 # returns meta fields
 def get_meta(context):
     report_meta = None
@@ -95,11 +104,12 @@ def print_record(context, meta, args):
             elif args.format == 'json':
                 print(json.dumps(elements))
             else:
-                print(';'.join(meta + (
-                    source_ip, count, disposition, dkim, spf,
-                    reason_type, comment, envelope_to, header_from,
-                    dkim_domain, dkim_result, dkim_hresult, spf_domain,
-                    spf_result, x_host_name)))
+                values = (source_ip, count, disposition, dkim, spf,
+                          reason_type, comment, envelope_to, header_from,
+                          dkim_domain, dkim_result, dkim_hresult, spf_domain,
+                          spf_result, x_host_name)
+                assert len(meta) + len(values) == len(header)
+                print(';'.join(meta + values))
 
             root.clear()
             continue
@@ -144,13 +154,7 @@ def main():
                   "xml tags found; File: " + args.dmarcfile, file=sys.stderr)
             sys.exit(1)
 
-        print(';'.join((
-            "orgName", "email", "extraContactInfo", "dateRangeBegin",
-            "dateRangeEnd", "domain", "adkim", "aspf", "policy", "percentage",
-            "sourceIP", "messageCount", "disposition", "dkim", "spf",
-            "reasonType", "comment", "envelopeTo", "headerFrom", "dkimDomain",
-            "dkimResult", "dkimHresult", "spfDomain", "spfResult", "xHostName",
-        )))
+        print(';'.join(header))
         print_record(etree.iterparse(filename, events=("start", "end"), recover=True), meta, args)
 
 
