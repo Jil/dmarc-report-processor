@@ -18,11 +18,13 @@
 import sys
 import os
 from lxml import etree
+from xml.etree import ElementTree as ET
 import argparse
 import json
 import zipfile
 import tempfile
 import contextlib
+import collections
 
 
 header = (
@@ -34,80 +36,82 @@ header = (
 )
 
 
+ReportMetadata = collections.namedtuple(
+    'ReportMetadata', 'org_name email extra_contact_info report_id ' +
+    'date_begin date_end')
+
+
+PolicyPublished = collections.namedtuple(
+    'PolicyPublished', 'domain adkim aspf p pct')
+
+
+Record = collections.namedtuple(
+    'Record', 'source_ip count disposition dkim spf type comment ' +
+    'envelope_to header_from dkim_domain dkim_result dkim_human_result ' +
+    'spf_domain spf_result')
+
+
 # returns meta fields
-def get_meta(context):
-    report_meta = None
-    feedback_pub = None
+def get_meta(filename):
+    context = ET.iterparse(filename, events=("start", "end"))
+    report_metadata = None
+    policy_published = None
 
     # get the root element
     event, root = next(context)
     for event, elem in context:
         if event == "end" and elem.tag == "report_metadata":
-            # process record elements
-            org_name = (elem.findtext("org_name", 'NULL')).replace(',', '')
-            email = (elem.findtext("email", 'NULL')).replace(',', '')
-            extra_contact_info = (elem.findtext("extra_contact_info", 'NULL')).replace(',', '')
-            report_id = (elem.findtext("report_id", 'NULL')).replace(',', '')
-            date_range_begin = (elem.findtext("date_range/begin", 'NULL')).replace(',', '')
-            date_range_end = (elem.findtext("date_range/end", 'NULL')).replace(',', '')
-            report_meta = (org_name, email, extra_contact_info,
-                           date_range_begin, date_range_end)
+            report_metadata = ReportMetadata(
+                elem.findtext("org_name"),
+                elem.findtext("email"),
+                elem.findtext("extra_contact_info"),
+                elem.findtext("report_id"),
+                elem.findtext("date_range/begin"),
+                elem.findtext("date_range/end"),
+            )
         elif event == "end" and elem.tag == "policy_published":
-            domain = elem.findtext("domain", 'NULL')
-            adkim = elem.findtext("adkim", 'NULL')
-            aspf = elem.findtext("aspf", 'NULL')
-            p = elem.findtext("p", 'NULL')
-            pct = elem.findtext("pct", 'NULL')
-            feedback_pub = (domain, adkim, aspf, p, pct)
+            policy_published = PolicyPublished(
+                elem.findtext("domain"),
+                elem.findtext("adkim"),
+                elem.findtext("aspf"),
+                elem.findtext("p"),
+                elem.findtext("pct"),
+            )
 
-        if feedback_pub and report_meta:
-            return report_meta + feedback_pub
+        if report_metadata and policy_published:
+            return report_metadata, policy_published
 
         root.clear()
 
+    return None, None
 
-def print_record(context, meta, args):
+
+def iter_records(filename):
+    context = ET.iterparse(filename, events=("start", "end"))
 
     # get the root element
     event, root = next(context)
 
     for event, elem in context:
         if event == "end" and elem.tag == "record":
-
-            elements = dict(meta=';'.join(meta))
-
-            # process record elements
-            # NOTE: This may require additional input validation
-            elements['source_ip'] = (elem.findtext("row/source_ip", 'NULL')).replace(',', '')
-            elements['count'] = (elem.findtext("row/count", 'NULL')).replace(',', '')
-            elements['disposition'] = (elem.findtext("row/policy_evaluated/disposition", 'NULL')).replace(',', '')
-            elements['dkim'] = (elem.findtext("row/policy_evaluated/dkim", 'NULL')).replace(',', '')
-            elements['spf'] = (elem.findtext("row/policy_evaluated/spf", 'NULL')).replace(',', '')
-            elements['reason_type'] = (elem.findtext("row/policy_evaluated/reason/type", 'NULL')).replace(',', '')
-            elements['comment'] = (elem.findtext("row/policy_evaluated/reason/comment", 'NULL')).replace(',', '')
-            elements['envelope_to'] = (elem.findtext("identifiers/envelope_to", 'NULL')).replace(',', '')
-            elements['header_from'] = (elem.findtext("identifiers/header_from", 'NULL')).replace(',', '')
-            elements['dkim_domain'] = (elem.findtext("auth_results/dkim/domain", 'NULL')).replace(',', '')
-            elements['dkim_result'] = (elem.findtext("auth_results/dkim/result", 'NULL')).replace(',', '')
-            elements['dkim_hresult'] = (elem.findtext("auth_results/dkim/human_result", 'NULL')).replace(',', '')
-            elements['spf_domain'] = (elem.findtext("auth_results/spf/domain", 'NULL')).replace(',', '')
-            elements['spf_result'] = (elem.findtext("auth_results/spf/result", 'NULL')).replace(',', '')
-
-            # If you can identify internal IP
-            elements['x_host_name'] = "NULL"
-            if args.format == 'CSV':
-                print(("{meta};{source_ip};{count};{disposition};{dkim};" +
-                       "{spf};{reason_type};{comment};{envelope_to};" +
-                       "{header_from};{dkim_domain};{dkim_result};" +
-                       "{dkim_hresult};{spf_domain};{spf_result};" +
-                       "{x_host_name}").format(**elements))
-            elif args.format == 'json':
-                print(json.dumps(elements))
-
+            yield Record(
+                elem.findtext("row/source_ip"),
+                elem.findtext("row/count"),
+                elem.findtext("row/policy_evaluated/disposition"),
+                elem.findtext("row/policy_evaluated/dkim"),
+                elem.findtext("row/policy_evaluated/spf"),
+                elem.findtext("row/policy_evaluated/reason/type"),
+                elem.findtext("row/policy_evaluated/reason/comment"),
+                elem.findtext("identifiers/envelope_to"),
+                elem.findtext("identifiers/header_from"),
+                elem.findtext("auth_results/dkim/domain"),
+                elem.findtext("auth_results/dkim/result"),
+                elem.findtext("auth_results/dkim/human_result"),
+                elem.findtext("auth_results/spf/domain"),
+                elem.findtext("auth_results/spf/result"),
+            )
             root.clear()
             continue
-
-    return
 
 
 def cleanup_input(inputfile):
@@ -128,27 +132,27 @@ def extract_file(filename):
         yield filename
 
 
+parser = argparse.ArgumentParser()
+# epilog="Example: %(prog)s dmarc-xml-file 1> outfile.log")
+parser.add_argument("dmarcfile", help="dmarc file in XML format")
+# parser.add_argument('--format', '-f',
+#     help="Output format, either 'CSV' or 'json'",
+#     default='CSV')
+
+
 def main():
-    options = argparse.ArgumentParser(
-        epilog="Example: %(prog)s dmarc-xml-file 1> outfile.log")
-    options.add_argument("dmarcfile", help="dmarc file in XML format")
-    options.add_argument('--format', '-f',
-        help="Output format, either 'CSV' or 'json'",
-        default='CSV')
-
-    args = options.parse_args()
-
+    args = parser.parse_args()
     with extract_file(args.dmarcfile) as filename:
         cleanup_input(filename)
-
-        meta = get_meta(etree.iterparse(filename, events=("start", "end"), recover=True))
-        if not meta:
+        report_metadata, policy_published = get_meta(filename)
+        if not report_metadata:
             print("Error: No valid 'policy_published' and 'report_metadata' " +
                   "xml tags found; File: " + args.dmarcfile, file=sys.stderr)
-            sys.exit(1)
-
-        print(';'.join(header))
-        print_record(etree.iterparse(filename, events=("start", "end"), recover=True), meta, args)
+            raise SystemExit(1)
+        print(report_metadata)
+        print(policy_published)
+        for record in iter_records(filename):
+            print(record)
 
 
 if __name__ == "__main__":
