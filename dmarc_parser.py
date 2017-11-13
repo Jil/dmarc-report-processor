@@ -113,7 +113,6 @@ def cleanup_input(inputfile):
 
 
 def main():
-    global args
     options = argparse.ArgumentParser(epilog="Example: \
 %(prog)s dmarc-xml-file 1> outfile.log")
     options.add_argument("dmarcfile", help="dmarc file in XML format")
@@ -133,8 +132,7 @@ def main():
 
     print("orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName")
     print_record(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)), meta_fields, args)
-    os.remove(args.dmarcfile)
+
 
 if __name__ == "__main__":
     main()
-
