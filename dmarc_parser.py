@@ -32,7 +32,7 @@ def get_meta(context):
   rm = 0  
 
   # get the root element
-  event, root = context.next()
+  event, root = next(context)
   for event, elem in context:
     if event == "end" and elem.tag == "report_metadata":
       # process record elements
@@ -71,7 +71,7 @@ def get_meta(context):
 def print_record(context, meta, args):
 
   # get the root element
-  event, root = context.next();
+  event, root = next(context);
 
   for event, elem in context:
     if event == "end" and elem.tag == "record":
@@ -103,19 +103,19 @@ def print_record(context, meta, args):
       #except: 
       #  x_host_name = "NULL"
       if args.format == 'CSV':
-	print "{meta}, source_ip={source_ip}, count={count}, disposition={disposition}, dkim={dkim}, " \
+	print("{meta}, source_ip={source_ip}, count={count}, disposition={disposition}, dkim={dkim}, " \
 	    "spf={spf}, reason_type={reason_type}, comment={comment}, envelope_to={envelope_to}, "\
 	    "header_from={header_from}, dkim_domain={dkim_domain}, dkim_result={dkim_result}, "\
 	    "dkim_hresult={dkim_hresult}, spf_domain={spf_domain}, spf_result={spf_result}, "\
-	    "x-host_name={x_host_name}".format(**elements)
+	    "x-host_name={x_host_name}".format(**elements))
       elif args.format == 'json':
-	print json.dumps(elements)
+	print(json.dumps(elements))
       else:
-        print meta + ";" + source_ip + ";" + count + ";" + disposition + ";" + dkim \
+        print(meta + ";" + source_ip + ";" + count + ";" + disposition + ";" + dkim \
               + ";" + spf + ";" + reason_type + ";" + comment + ";" + envelope_to \
               + ";" + header_from + ";" + dkim_domain + ";" + dkim_result \
               + ";" + dkim_hresult + ";" + spf_domain + ";" + spf_result  \
-              + ";" + x_host_name
+              + ";" + x_host_name)
 
       root.clear();
       continue
@@ -124,7 +124,7 @@ def print_record(context, meta, args):
 
 def cleanup_input(inputfile):
   for line in fileinput.input(inputfile, inplace = 1): 
-    print line.replace('>" <xs', '> <xs')
+    print(line.replace('>" <xs', '> <xs'))
   return;
 
 
@@ -144,10 +144,10 @@ def main():
   # get an iterable and turn it into an iterator
   meta_fields = get_meta(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)));
   if not meta_fields:
-    print >> sys.stderr, "Error: No valid 'policy_published' and 'report_metadata' xml tags found; File: " + args.dmarcfile 
+    print("Error: No valid 'policy_published' and 'report_metadata' xml tags found; File: " + args.dmarcfile, file=sys.stderr) 
     sys.exit(1)
 
-  print "orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName"
+  print("orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName")
   print_record(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)), meta_fields, args)
   os.remove(args.dmarcfile)
 
