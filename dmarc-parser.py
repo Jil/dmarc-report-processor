@@ -16,9 +16,11 @@
 # Error messages are directed to stderr
 #
 import sys
-import xml.etree.cElementTree as etree
+import os
+from lxml import etree
 import argparse
 import socket
+import fileinput
 
 # returns meta fields
 def get_meta(context):
@@ -40,8 +42,8 @@ def get_meta(context):
       date_range_begin = (elem.findtext("date_range/begin", 'NULL')).translate(None, ',')
       date_range_end = (elem.findtext("date_range/end", 'NULL')).translate(None, ',')
 
-      report_meta =  "org_name=" + org_name + ", email=" + email + ", extra_contact_info=" + extra_contact_info \
-            + ", date_range_begin=" + date_range_begin + ", date_range_end=" + date_range_end
+      report_meta =  org_name + ";" + email + ";" + extra_contact_info \
+            + ";" + date_range_begin + ";" + date_range_end
       rm = 1
       root.clear();
       continue
@@ -53,13 +55,13 @@ def get_meta(context):
       p = elem.findtext("p", 'NULL')
       pct = elem.findtext("pct", 'NULL')
 
-      feedback_pub = "domain=" + domain + ", adkim=" + adkim + ", aspf=" + aspf + ", p=" + p + ", pct=" + pct
+      feedback_pub = ";" + domain + ";" + adkim + ";" + aspf + ";" + p + ";" + pct
       pp = 1
       root.clear();
       continue      
 
     if pp == 1 and rm == 1:
-      meta = report_meta + ", " + feedback_pub
+      meta = report_meta + feedback_pub
       #print meta
       return meta
   
@@ -98,15 +100,20 @@ def print_record(context, meta, args):
       #except: 
       #  x_host_name = "NULL"
 			
-      print meta + ", source_ip=" + source_ip + ", count=" + count + ", disposition=" + disposition + ", dkim=" + dkim \
-            + ", spf=" + spf + ", reason_type=" + reason_type + ", comment=" + comment + ", envelope_to=" + envelope_to \
-            + ", header_from=" + header_from + ", dkim_domain=" + dkim_domain + ", dkim_result=" + dkim_result \
-            + ", dkim_hresult=" + dkim_hresult + ", spf_domain=" + spf_domain + ", spf_result=" + spf_result  \
-            + ", x-host_name=" + x_host_name
+      print meta + ";" + source_ip + ";" + count + ";" + disposition + ";" + dkim \
+            + ";" + spf + ";" + reason_type + ";" + comment + ";" + envelope_to \
+            + ";" + header_from + ";" + dkim_domain + ";" + dkim_result \
+            + ";" + dkim_hresult + ";" + spf_domain + ";" + spf_result  \
+            + ";" + x_host_name
 
       root.clear();
       continue
 
+  return;
+
+def cleanup_input(inputfile):
+  for line in fileinput.input(inputfile, inplace = 1): 
+    print line.replace('>" <xs', '> <xs')
   return;
 
 
@@ -117,13 +124,17 @@ def main():
   options.add_argument("dmarcfile", help="dmarc file in XML format")
   args = options.parse_args()
 
+  cleanup_input(args.dmarcfile);
+
   # get an iterable and turn it into an iterator
-  meta_fields = get_meta(iter(etree.iterparse(args.dmarcfile, events=("start", "end"))));
+  meta_fields = get_meta(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)));
   if not meta_fields:
     print >> sys.stderr, "Error: No valid 'policy_published' and 'report_metadata' xml tags found; File: " + args.dmarcfile 
     sys.exit(1)
 
-  print_record(iter(etree.iterparse(args.dmarcfile, events=("start", "end"))), meta_fields, args)
+  print "orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName"
+  print_record(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)), meta_fields, args)
+  os.remove(args.dmarcfile)
 
 if __name__ == "__main__":
   main()
