@@ -96,11 +96,11 @@ def print_record(context, meta, args):
             elif args.format == 'json':
                 print(json.dumps(elements))
             else:
-                print(meta + ";" + source_ip + ";" + count + ";" + disposition + ";" + dkim
-                      + ";" + spf + ";" + reason_type + ";" + comment + ";" + envelope_to
-                      + ";" + header_from + ";" + dkim_domain + ";" + dkim_result
-                      + ";" + dkim_hresult + ";" + spf_domain + ";" + spf_result
-                      + ";" + x_host_name)
+                print(';'.join((
+                    meta, source_ip, count, disposition, dkim, spf,
+                    reason_type, comment, envelope_to, header_from,
+                    dkim_domain, dkim_result, dkim_hresult, spf_domain,
+                    spf_result, x_host_name)))
 
             root.clear()
             continue
@@ -141,7 +141,8 @@ def main():
 
         meta_fields = get_meta(etree.iterparse(filename, events=("start", "end"), recover=True))
         if not meta_fields:
-            print("Error: No valid 'policy_published' and 'report_metadata' xml tags found; File: " + args.dmarcfile, file=sys.stderr)
+            print("Error: No valid 'policy_published' and 'report_metadata' " +
+                  "xml tags found; File: " + args.dmarcfile, file=sys.stderr)
             sys.exit(1)
 
         print("orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName")
