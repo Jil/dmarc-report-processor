@@ -17,10 +17,8 @@
 #
 import sys
 import os
-from lxml import etree
 from xml.etree import ElementTree as ET
 import argparse
-import json
 import zipfile
 import tempfile
 import contextlib
