@@ -24,11 +24,8 @@ import json
 
 # returns meta fields
 def get_meta(context):
-    report_meta = ""
-    feedback_pub = ""
-
-    pp = 0
-    rm = 0
+    report_meta = None
+    feedback_pub = None
 
     # get the root element
     event, root = next(context)
@@ -41,31 +38,22 @@ def get_meta(context):
             report_id = (elem.findtext("report_id", 'NULL')).replace(',', '')
             date_range_begin = (elem.findtext("date_range/begin", 'NULL')).replace(',', '')
             date_range_end = (elem.findtext("date_range/end", 'NULL')).replace(',', '')
-
-            report_meta =    org_name + ";" + email + ";" + extra_contact_info \
-                        + ";" + date_range_begin + ";" + date_range_end
-            rm = 1
-            root.clear()
-            continue
-
-        if event == "end" and elem.tag == "policy_published":
+            report_meta = (org_name, email, extra_contact_info,
+                           date_range_begin, date_range_end)
+        elif event == "end" and elem.tag == "policy_published":
             domain = elem.findtext("domain", 'NULL')
             adkim = elem.findtext("adkim", 'NULL')
             aspf = elem.findtext("aspf", 'NULL')
             p = elem.findtext("p", 'NULL')
             pct = elem.findtext("pct", 'NULL')
+            feedback_pub = (domain, adkim, aspf, p, pct)
 
-            feedback_pub = ";" + domain + ";" + adkim + ";" + aspf + ";" + p + ";" + pct
-            pp = 1
-            root.clear()
-            continue            
-
-        if pp == 1 and rm == 1:
+        if feedback_pub and report_meta:
             meta = report_meta + feedback_pub
-            #print meta
-            return meta
-    
-    return
+            return ';'.join(meta)
+
+        root.clear()
+
 
 def print_record(context, meta, args):
 
