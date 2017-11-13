@@ -139,14 +139,13 @@ def main():
     with extract_file(args.dmarcfile) as filename:
         cleanup_input(filename)
 
-        # get an iterable and turn it into an iterator
-        meta_fields = get_meta(iter(etree.iterparse(filename, events=("start", "end"), recover=True)))
+        meta_fields = get_meta(etree.iterparse(filename, events=("start", "end"), recover=True))
         if not meta_fields:
             print("Error: No valid 'policy_published' and 'report_metadata' xml tags found; File: " + args.dmarcfile, file=sys.stderr)
             sys.exit(1)
 
         print("orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName")
-        print_record(iter(etree.iterparse(filename, events=("start", "end"), recover=True)), meta_fields, args)
+        print_record(etree.iterparse(filename, events=("start", "end"), recover=True), meta_fields, args)
 
 
 if __name__ == "__main__":
