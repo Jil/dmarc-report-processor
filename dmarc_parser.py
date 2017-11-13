@@ -35,12 +35,12 @@ def get_meta(context):
     for event, elem in context:
         if event == "end" and elem.tag == "report_metadata":
             # process record elements
-            org_name = (elem.findtext("org_name", 'NULL')).translate(None, ',')
-            email = (elem.findtext("email", 'NULL')).translate(None, ',')
-            extra_contact_info = (elem.findtext("extra_contact_info", 'NULL')).translate(None, ',')
-            report_id = (elem.findtext("report_id", 'NULL')).translate(None, ',')
-            date_range_begin = (elem.findtext("date_range/begin", 'NULL')).translate(None, ',')
-            date_range_end = (elem.findtext("date_range/end", 'NULL')).translate(None, ',')
+            org_name = (elem.findtext("org_name", 'NULL')).replace(',', '')
+            email = (elem.findtext("email", 'NULL')).replace(',', '')
+            extra_contact_info = (elem.findtext("extra_contact_info", 'NULL')).replace(',', '')
+            report_id = (elem.findtext("report_id", 'NULL')).replace(',', '')
+            date_range_begin = (elem.findtext("date_range/begin", 'NULL')).replace(',', '')
+            date_range_end = (elem.findtext("date_range/end", 'NULL')).replace(',', '')
 
             report_meta =    org_name + ";" + email + ";" + extra_contact_info \
                         + ";" + date_range_begin + ";" + date_range_end
@@ -79,20 +79,20 @@ def print_record(context, meta, args):
 
             # process record elements
             # NOTE: This may require additional input validation
-            elements['source_ip'] = (elem.findtext("row/source_ip", 'NULL')).translate(None, ',')
-            elements['count'] = (elem.findtext("row/count", 'NULL')).translate(None, ',')
-            elements['disposition'] = (elem.findtext("row/policy_evaluated/disposition", 'NULL')).translate(None, ',')
-            elements['dkim'] = (elem.findtext("row/policy_evaluated/dkim", 'NULL')).translate(None, ',')
-            elements['spf'] = (elem.findtext("row/policy_evaluated/spf", 'NULL')).translate(None, ',')
-            elements['reason_type'] = (elem.findtext("row/policy_evaluated/reason/type", 'NULL')).translate(None, ',')
-            elements['comment'] = (elem.findtext("row/policy_evaluated/reason/comment", 'NULL')).translate(None, ',')
-            elements['envelope_to'] = (elem.findtext("identifiers/envelope_to", 'NULL')).translate(None, ',')
-            elements['header_from'] = (elem.findtext("identifiers/header_from", 'NULL')).translate(None, ',')
-            elements['dkim_domain'] = (elem.findtext("auth_results/dkim/domain", 'NULL')).translate(None, ',')
-            elements['dkim_result'] = (elem.findtext("auth_results/dkim/result", 'NULL')).translate(None, ',')
-            elements['dkim_hresult'] = (elem.findtext("auth_results/dkim/human_result", 'NULL')).translate(None, ',')
-            elements['spf_domain'] = (elem.findtext("auth_results/spf/domain", 'NULL')).translate(None, ',')
-            elements['spf_result'] = (elem.findtext("auth_results/spf/result", 'NULL')).translate(None, ',')
+            elements['source_ip'] = (elem.findtext("row/source_ip", 'NULL')).replace(',', '')
+            elements['count'] = (elem.findtext("row/count", 'NULL')).replace(',', '')
+            elements['disposition'] = (elem.findtext("row/policy_evaluated/disposition", 'NULL')).replace(',', '')
+            elements['dkim'] = (elem.findtext("row/policy_evaluated/dkim", 'NULL')).replace(',', '')
+            elements['spf'] = (elem.findtext("row/policy_evaluated/spf", 'NULL')).replace(',', '')
+            elements['reason_type'] = (elem.findtext("row/policy_evaluated/reason/type", 'NULL')).replace(',', '')
+            elements['comment'] = (elem.findtext("row/policy_evaluated/reason/comment", 'NULL')).replace(',', '')
+            elements['envelope_to'] = (elem.findtext("identifiers/envelope_to", 'NULL')).replace(',', '')
+            elements['header_from'] = (elem.findtext("identifiers/header_from", 'NULL')).replace(',', '')
+            elements['dkim_domain'] = (elem.findtext("auth_results/dkim/domain", 'NULL')).replace(',', '')
+            elements['dkim_result'] = (elem.findtext("auth_results/dkim/result", 'NULL')).replace(',', '')
+            elements['dkim_hresult'] = (elem.findtext("auth_results/dkim/human_result", 'NULL')).replace(',', '')
+            elements['spf_domain'] = (elem.findtext("auth_results/spf/domain", 'NULL')).replace(',', '')
+            elements['spf_result'] = (elem.findtext("auth_results/spf/result", 'NULL')).replace(',', '')
 
             # If you can identify internal IP
             elements['x_host_name'] = "NULL"
