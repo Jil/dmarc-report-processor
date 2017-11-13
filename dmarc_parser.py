@@ -20,7 +20,7 @@ import os
 from lxml import etree
 import argparse
 import socket
-import fileinput
+import tempfile
 import json
 
 # returns meta fields
@@ -122,10 +122,12 @@ def print_record(context, meta, args):
 
     return
 
+
 def cleanup_input(inputfile):
-    for line in fileinput.input(inputfile, inplace = 1): 
-        print(line.replace('>" <xs', '> <xs'))
-    return
+    with open(inputfile) as fp, open(inputfile + '.tmp', 'x') as fp2:
+        for line in fp:
+            fp2.write(line.replace('>" <xs', '> <xs'))
+    os.rename(inputfile + '.tmp', inputfile)
 
 
 def main():
