@@ -145,7 +145,7 @@ def main():
             sys.exit(1)
 
         print(';'.join((
-            "orgName", "email", "extraContactInfo:dateRangeBegin",
+            "orgName", "email", "extraContactInfo", "dateRangeBegin",
             "dateRangeEnd", "domain", "adkim", "aspf", "policy", "percentage",
             "sourceIP", "messageCount", "disposition", "dkim", "spf",
             "reasonType", "comment", "envelopeTo", "headerFrom", "dkimDomain",
