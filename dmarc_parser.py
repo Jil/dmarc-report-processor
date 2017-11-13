@@ -46,7 +46,7 @@ def get_meta(context):
       report_meta =  org_name + ";" + email + ";" + extra_contact_info \
             + ";" + date_range_begin + ";" + date_range_end
       rm = 1
-      root.clear();
+      root.clear()
       continue
 
     if event == "end" and elem.tag == "policy_published":
@@ -58,7 +58,7 @@ def get_meta(context):
 
       feedback_pub = ";" + domain + ";" + adkim + ";" + aspf + ";" + p + ";" + pct
       pp = 1
-      root.clear();
+      root.clear()
       continue      
 
     if pp == 1 and rm == 1:
@@ -71,7 +71,7 @@ def get_meta(context):
 def print_record(context, meta, args):
 
   # get the root element
-  event, root = next(context);
+  event, root = next(context)
 
   for event, elem in context:
     if event == "end" and elem.tag == "record":
@@ -117,15 +117,15 @@ def print_record(context, meta, args):
               + ";" + dkim_hresult + ";" + spf_domain + ";" + spf_result  \
               + ";" + x_host_name)
 
-      root.clear();
+      root.clear()
       continue
 
-  return;
+  return
 
 def cleanup_input(inputfile):
   for line in fileinput.input(inputfile, inplace = 1): 
     print(line.replace('>" <xs', '> <xs'))
-  return;
+  return
 
 
 def main():
@@ -139,10 +139,10 @@ def main():
 
   args = options.parse_args()
 
-  cleanup_input(args.dmarcfile);
+  cleanup_input(args.dmarcfile)
 
   # get an iterable and turn it into an iterator
-  meta_fields = get_meta(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)));
+  meta_fields = get_meta(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)))
   if not meta_fields:
     print("Error: No valid 'policy_published' and 'report_metadata' xml tags found; File: " + args.dmarcfile, file=sys.stderr) 
     sys.exit(1)
