@@ -127,8 +127,8 @@ def extract_file(filename):
 
 
 def main():
-    options = argparse.ArgumentParser(epilog="Example: \
-%(prog)s dmarc-xml-file 1> outfile.log")
+    options = argparse.ArgumentParser(
+        epilog="Example: %(prog)s dmarc-xml-file 1> outfile.log")
     options.add_argument("dmarcfile", help="dmarc file in XML format")
     options.add_argument('--format', '-f',
         help="Output format, either 'CSV' or 'json'",
