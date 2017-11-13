@@ -103,11 +103,11 @@ def print_record(context, meta, args):
             #except: 
             #    x_host_name = "NULL"
             if args.format == 'CSV':
-                print("{meta}, source_ip={source_ip}, count={count}, disposition={disposition}, dkim={dkim}, " \
-                        "spf={spf}, reason_type={reason_type}, comment={comment}, envelope_to={envelope_to}, "\
-                        "header_from={header_from}, dkim_domain={dkim_domain}, dkim_result={dkim_result}, "\
-                        "dkim_hresult={dkim_hresult}, spf_domain={spf_domain}, spf_result={spf_result}, "\
-                        "x-host_name={x_host_name}".format(**elements))
+                print("{meta}, source_ip={source_ip}, count={count}, disposition={disposition}, dkim={dkim}, "
+                      "spf={spf}, reason_type={reason_type}, comment={comment}, envelope_to={envelope_to}, "
+                      "header_from={header_from}, dkim_domain={dkim_domain}, dkim_result={dkim_result}, "
+                      "dkim_hresult={dkim_hresult}, spf_domain={spf_domain}, spf_result={spf_result}, "
+                      "x-host_name={x_host_name}".format(**elements))
             elif args.format == 'json':
                 print(json.dumps(elements))
             else:
