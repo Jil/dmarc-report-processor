@@ -21,13 +21,14 @@ from lxml import etree
 import argparse
 import json
 
+
 # returns meta fields
 def get_meta(context):
     report_meta = ""
     feedback_pub = ""
 
     pp = 0
-    rm = 0    
+    rm = 0
 
     # get the root element
     event, root = next(context)
