@@ -17,9 +17,10 @@
 #
 import sys
 import os
-import xml.etree.cElementTree as etree
+from lxml import etree
 import argparse
 import socket
+import fileinput
 
 # returns meta fields
 def get_meta(context):
@@ -110,6 +111,11 @@ def print_record(context, meta, args):
 
   return;
 
+def cleanup_input(inputfile):
+  for line in fileinput.input(inputfile, inplace = 1): 
+    print line.replace('>" <xs', '> <xs')
+  return;
+
 
 def main():
   global args
@@ -118,14 +124,16 @@ def main():
   options.add_argument("dmarcfile", help="dmarc file in XML format")
   args = options.parse_args()
 
+  cleanup_input(args.dmarcfile);
+
   # get an iterable and turn it into an iterator
-  meta_fields = get_meta(iter(etree.iterparse(args.dmarcfile, events=("start", "end"))));
+  meta_fields = get_meta(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)));
   if not meta_fields:
     print >> sys.stderr, "Error: No valid 'policy_published' and 'report_metadata' xml tags found; File: " + args.dmarcfile 
     sys.exit(1)
 
   print "orgName;email;extraContactInfo:dateRangeBegin;dateRangeEnd;domain;adkim;aspf;policy;percentage;sourceIP;messageCount;disposition;dkim;spf;reasonType;comment;envelopeTo;headerFrom;dkimDomain;dkimResult;dkimHresult;spfDomain;spfResult;xHostName"
-  print_record(iter(etree.iterparse(args.dmarcfile, events=("start", "end"))), meta_fields, args)
+  print_record(iter(etree.iterparse(args.dmarcfile, events=("start", "end"), recover=True)), meta_fields, args)
   os.remove(args.dmarcfile)
 
 if __name__ == "__main__":
