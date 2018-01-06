@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright (c) 2014, Yahoo! Inc.
 # Copyrights licensed under the New BSD License. See the

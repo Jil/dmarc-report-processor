@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/bin/bash
 # Copyright (c) 2014, Yahoo! Inc.
 # Copyrights licensed under the New BSD License. See the
 # accompanying LICENSE.txt file for terms.
@@ -12,11 +12,13 @@
 # 3. Convert dmarc xml files to line oriented format for splunk
 #
 
-ROOT='/'
+ROOT=$(pwd)
 DMARC_ROOT="${ROOT}/var/dmarc-report-processor"
 ATTACH="${DMARC_ROOT}/attach_raw"
 XML="${DMARC_ROOT}/dmarc_xml"
 DMARC_SPLUNK="${DMARC_ROOT}/dmarc_splunk"
+
+export LC_ALL=C
 
 os=`uname`
 ydate=`date -d "yesterday 13:00 " '+%d-%h-%Y'`
@@ -87,16 +89,16 @@ then
 fi
 
 # create directory if it doesn't exists. Ignore error if exists
-mkdir -m 0755 ${DMARC_ROOT} 2> /dev/null
-mkdir -m 0755 ${ATTACH} 2> /dev/null
-mkdir -m 0755 ${XML} 2> /dev/null
-mkdir -m 0755 ${DMARC_SPLUNK} 2> /dev/null
-mkdir -m 0755 ${ATTACH}/${ydate}
+mkdir -p -m 0755 ${DMARC_ROOT} 2> /dev/null
+mkdir -p -m 0755 ${ATTACH} 2> /dev/null
+mkdir -p -m 0755 ${XML} 2> /dev/null
+mkdir -p -m 0755 ${DMARC_SPLUNK} 2> /dev/null
+mkdir -p -m 0755 ${ATTACH}/${ydate}
 if [ "$?" -ne "0" ]
 then
   rm -rf "${ATTACH}/${ydate}.old" 2> /dev/null
   mv "${ATTACH}/${ydate}" "${ATTACH}/${ydate}.old"
-  mkdir -m 0755 "${ATTACH}/${ydate}"
+  mkdir -p -m 0755 "${ATTACH}/${ydate}"
 fi
 
 
@@ -117,7 +119,7 @@ fi
 #2
 echo "Step 2: Unzipping files"
 echo "-----------------------"
-mkdir "${XML}/${ydate}"
+mkdir -p "${XML}/${ydate}"
 rm -rf "${XML}/${ydate}/*" 2> /dev/null
 for f in "${ATTACH}/${ydate}"/*; do
   echo "$f"
@@ -139,7 +141,7 @@ done
 #3
 echo "Step 3: Converting xml files"
 echo "----------------------------"
-mkdir "${DMARC_SPLUNK}/${ydate}"
+mkdir -p "${DMARC_SPLUNK}/${ydate}"
 rm -rf "${DMARC_SPLUNK}/${ydate}/*" 2> /dev/null
 for f in "${XML}/${ydate}"/*; do
   fname=$(basename $f)

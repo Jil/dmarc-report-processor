@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright (c) 2014, Yahoo! Inc.
 # Copyrights licensed under the New BSD License. See the
@@ -25,23 +25,23 @@ import datetime
 # Override IMAP4_SSL to validate server identity (CA cert validation)
 class IMAP4_SSL_Ex(imaplib.IMAP4_SSL):
   def __init__(self, host = '', port = imaplib.IMAP4_SSL_PORT,
-                                ca_certs = None, cert_reqs = ssl.CERT_REQUIRED,
-                                ssl_version = ssl.PROTOCOL_TLSv1):
+                                ca_certs = None, cert_reqs = ssl.CERT_NONE,
+                                ssl_version = ssl.PROTOCOL_TLSv1_1):
     self.cert_reqs = cert_reqs
     self.ca_certs = ca_certs
     self.ssl_version = ssl_version
     imaplib.IMAP4_SSL.__init__(self, host, port, keyfile = None, certfile = None)
 
-  def open(self, host = '', port = imaplib.IMAP4_SSL_PORT):
-    self.host = host
-    self.port = port
-    self.sock = socket.create_connection((host, port))
-    self.sslobj = ssl.wrap_socket(self.sock, self.keyfile, 
-                          self.certfile, 
-                          cert_reqs=self.cert_reqs,
-                          ssl_version=self.ssl_version,
-                          ca_certs=self.ca_certs)
-    self.file = self.sslobj.makefile('rb')
+  # def open(self, host = '', port = imaplib.IMAP4_SSL_PORT):
+  #   self.host = host
+  #   self.port = port
+  #   self.sock = socket.create_connection((host, port))
+  #   self.sslobj = ssl.wrap_socket(self.sock, self.keyfile, 
+  #                         self.certfile, 
+  #                         cert_reqs=self.cert_reqs,
+  #                         ssl_version=self.ssl_version,
+  #                         ca_certs=self.ca_certs)
+  #   self.file = self.sslobj.makefile('rb')
 
 # global object
 args = ""
@@ -49,7 +49,7 @@ args = ""
 def vprint(msg):
   global args
   if args.quiet: return
-  if args.verbose: print msg;
+  if args.verbose: print (msg)
 
 def process_mailbox(mail):
   # dumps emails/attachments in the folder to output directory.
@@ -58,18 +58,21 @@ def process_mailbox(mail):
   vprint(args.search)
 
   ret, data = mail.search(None, '(' + args.search + ')')
+  #ret, data = mail.search(None, 'ALL')
   if ret != 'OK':
-    print >> sys.stderr, "ERROR: No messages found"
+    print ("ERROR: No messages found")
     return 1
 
   if not os.path.exists(args.outdir):
     os.makedirs(args.outdir)
 
+  print(data.count)
+
   for num in data[0].split():
     ret, data = mail.fetch(num, '(RFC822)')
     if ret != 'OK':
-	print >> sys.stderr, "ERROR getting message from IMAP server", num
-	return 1
+      print ("ERROR getting message from IMAP server", num)
+      return 1
 
     if not args.attachmentsonly:
       vprint ("Writing message "+ num)
@@ -77,33 +80,36 @@ def process_mailbox(mail):
       fp.write(data[0][1])
       fp.close()
       count = count + 1
-      print args.outdir+"/"+num+".eml"
+      print (args.outdir+"/"+num+".eml")
 
     else:
-      m = email.message_from_string(data[0][1])
-      if m.get_content_maintype() == 'multipart' or \
-      m.get_content_type() == 'application/zip' or \
-      m.get_content_type() == 'application/gzip': 
-	for part in m.walk():
+      try:
+        m = email.message_from_string(data[0][1].decode('ASCII'))
+        if m.get_content_maintype() == 'multipart' or \
+        m.get_content_type() == 'application/zip' or \
+        m.get_content_type() == 'application/gzip': 
+          for part in m.walk():
 
-	  #find the attachment part
-	  if part.get_content_maintype() == 'multipart': continue
-	  if part.get('Content-Disposition') is None: continue
+            #find the attachment part
+            if part.get_content_maintype() == 'multipart':  continue
+            if part.get('Content-Disposition') is None: continue
 
-	  #save the attachment in the given directory
-	  filename = part.get_filename()
-	  if not filename: continue
-	  filename = args.outdir+"/"+filename
-	  fp = open(filename, 'wb')
-	  fp.write(part.get_payload(decode=True))
-	  fp.close()
-	  print filename
-          count = count + 1
+            #save the attachment in the given directory
+            filename = part.get_filename()
+            if not filename: continue
+            filename = args.outdir+"/"+filename
+            fp = open(filename, 'wb')
+            fp.write(part.get_payload(decode=True))
+            fp.close()
+            print (filename)
+            count = count + 1
+      except:
+        print ("Could not get mail id ", num)
     
   if args.attachmentsonly:
-    print "\nTotal attachments downloaded: ", count
+    print ("\nTotal attachments downloaded: ", count)
   else:
-    print "\nTotal mails downloaded: ", count
+    print ("\nTotal mails downloaded: ", count)
 
 def main():
   global args
@@ -147,7 +153,7 @@ def main():
       
     mail.close()
   else:
-    print >> sys.stderr, "ERROR: Unable to open mailbox ", rv
+    print ("ERROR: Unable to open mailbox ", rv)
     mail.logout()
     sys.exit(1)
 
